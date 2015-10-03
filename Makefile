@@ -22,9 +22,9 @@ CC= g++
 CFLAGS= -std=c++11 -Wall -g
 LDFLAGS= -lm
 
-LOBJECTS= TopicModel.o lda-data.o lda-model.o utils.o cokus.o lda-alpha.o
+LOBJECTS= lda-data.o TopicModel.o lda-model.o utils.o cokus.o lda-alpha.o
 
-LSOURCE= TopicModel.cpp lda-data.cpp lda-model.cpp utils.cpp cokus.cpp lda-alpha.cpp
+LSOURCE= lda-data.cpp TopicModel.cpp lda-model.cpp utils.cpp cokus.cpp lda-alpha.cpp
 
 lda:	$(LOBJECTS)
 	$(CC) $(CFLAGS) $(LOBJECTS) -o lda $(LDFLAGS)
