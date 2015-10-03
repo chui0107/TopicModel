@@ -184,7 +184,8 @@ double TopicModel::compute_likelihood(document* doc, lda_model* model, double** 
 
 void TopicModel::run_em(corpus* corpus)
 {
-    char* start = (char*)this->mAlpha.c_str();
+    make_directory((char*)this->mOutputPath.c_str());
+    char* start = (char*)this->mTopicInit.c_str();
     char* directory = (char*)this->mOutputPath.c_str();
 
     int d, n;
@@ -309,27 +310,37 @@ void TopicModel::run_em(corpus* corpus)
 
 TopicModel::TopicModel(TopicModelSettings& settings)
 {
+
     //lda est 1 30 ./settings.txt ./ap/ap.dat random ./output
     this->mDataPath = settings.mDataPath;
+
     this->mTopicInit = settings.mTopicInit;
+
     this->mOutputPath = settings.mOutputPath;
+
     this->mAlpha = settings.mAlpha;
+
     this->mInitialAlpha = settings.mInitialAlpha;
 
     this->VAR_MAX_ITER = settings.mVarMaxIter;
+
     this->VAR_CONVERGED = settings.mConvergence;
 
     this->EM_CONVERGED = settings.mEmConvergence;
+
     this->EM_MAX_ITER = settings.mEmMaxIter;
+
     this->INITIAL_ALPHA = settings.mInitialAlpha;
+
     this->NTOPICS = settings.mNTopics;
-    this->ESTIMATE_ALPHA = (this->mTopicInit == "fixed") ? 0 : 1;
+
+    this->ESTIMATE_ALPHA = (this->mAlpha == "fixed") ? 0 : 1;
 }
 
 int main()
 {
-    TopicModelSettings settings(0.5, 30, 20, 1e-6, 100, 1e-4, "random",
-        "example/ap/ap.dat", "estimate", "output");
+    TopicModelSettings settings(0.5, 30, 20, 1e-6, 100, 1e-4, "estimate",
+        "example/ap/ap.dat", "random", "output");
     TopicModel topicModel(settings);
 
     corpus* newsCorpus = read_data((char*)settings.mDataPath.c_str());

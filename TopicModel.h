@@ -16,6 +16,8 @@
 #include "cokus.h"
 #include <string>
 #include <assert.h>
+#include "utils.h"
+#include <iostream>
 
 struct TopicModelSettings {
 
