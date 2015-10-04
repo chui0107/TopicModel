@@ -47,31 +47,45 @@ struct TopicModelSettings {
 	*/
 
     int mVarMaxIter;
-    float mConvergence;
+    float mVarConvergence;
     int mEmMaxIter;
     float mEmConvergence;
     std::string mAlpha;
 
     TopicModelSettings(float initialAlpha, int topics, int varMaxIter,
-        float convergence, int emmaxIter, float emconvergence, std::string alpha,
+        float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
         std::string dataPath, std::string topicInit, std::string outputPath);
 };
 
 class TopicModel {
 
 private:
-    const int LAG = 5;
+    const int LAG;
 
-    float mInitialAlpha;
+    /*
+	 example:
+	 
+	 0.5
+	 30
+	 1e-4
+	 100
+	 0
+	 0.5
+	 
+	 random
+	 estimate
+	 ap.dat
+	 output
+	 */
+
+    double INITIAL_ALPHA;
     int NTOPICS;
 
-    float VAR_CONVERGED;
     int VAR_MAX_ITER;
-
+    float VAR_CONVERGED;
     float EM_CONVERGED;
     int EM_MAX_ITER;
     int ESTIMATE_ALPHA;
-    double INITIAL_ALPHA;
 
     std::string mTopicInit;
     std::string mAlpha;
@@ -104,7 +118,7 @@ private:
         double*);
 
 public:
-    TopicModel(TopicModelSettings& settings);
+    TopicModel(const TopicModelSettings& settings);
 
     void run_em(corpus* corpus);
 };

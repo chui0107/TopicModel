@@ -3,14 +3,14 @@
 //constructor
 
 TopicModelSettings::TopicModelSettings(float initialAlpha, int topics, int varMaxIter,
-    float convergence, int emmaxIter, float emconvergence, std::string alpha,
+    float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
     std::string dataPath, std::string topicInit, std::string outputPath)
     : mInitialAlpha(initialAlpha)
     , mNTopics(topics)
     , mVarMaxIter(varMaxIter)
-    , mConvergence(convergence)
-    , mEmMaxIter(emmaxIter)
-    , mEmConvergence(emconvergence)
+    , mVarConvergence(varConvergence)
+    , mEmMaxIter(emMaxIter)
+    , mEmConvergence(emConvergence)
     , mAlpha(alpha)
     , mDataPath(dataPath)
     , mTopicInit(topicInit)
@@ -308,10 +308,10 @@ void TopicModel::run_em(corpus* corpus)
 
 //constructor
 
-TopicModel::TopicModel(TopicModelSettings& settings)
+TopicModel::TopicModel(const TopicModelSettings& settings)
+    : LAG(5)
 {
 
-    //lda est 1 30 ./settings.txt ./ap/ap.dat random ./output
     this->mDataPath = settings.mDataPath;
 
     this->mTopicInit = settings.mTopicInit;
@@ -320,11 +320,9 @@ TopicModel::TopicModel(TopicModelSettings& settings)
 
     this->mAlpha = settings.mAlpha;
 
-    this->mInitialAlpha = settings.mInitialAlpha;
-
     this->VAR_MAX_ITER = settings.mVarMaxIter;
 
-    this->VAR_CONVERGED = settings.mConvergence;
+    this->VAR_CONVERGED = settings.mVarConvergence;
 
     this->EM_CONVERGED = settings.mEmConvergence;
 
