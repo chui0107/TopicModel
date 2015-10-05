@@ -1,24 +1,33 @@
 #include "TopicModel.h"
 
-//constructor
-
-TopicModelSettings::TopicModelSettings(float initialAlpha, int topics, int varMaxIter,
-    float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
-    std::string dataPath, std::string topicInit, std::string outputPath)
-    : mInitialAlpha(initialAlpha)
-    , mNTopics(topics)
-    , mVarMaxIter(varMaxIter)
-    , mVarConvergence(varConvergence)
-    , mEmMaxIter(emMaxIter)
-    , mEmConvergence(emConvergence)
-    , mAlpha(alpha)
-    , mDataPath(dataPath)
-    , mTopicInit(topicInit)
-    , mOutputPath(outputPath)
-{
-}
-
 //private methods
+
+void TopicModel::SetTopicModelEstimateSettings(const TopicModelEstimate& settings)
+{
+    this->mDataPath = settings.mDataPath;
+
+    this->mTopicInit = settings.mTopicInit;
+
+    this->mOutputPath = settings.mOutputPath;
+
+    this->mAlpha = settings.mAlpha;
+
+    this->VAR_MAX_ITER = settings.mVarMaxIter;
+
+    this->VAR_CONVERGED = settings.mVarConvergence;
+
+    this->EM_CONVERGED = settings.mEmConvergence;
+
+    this->EM_MAX_ITER = settings.mEmMaxIter;
+
+    this->INITIAL_ALPHA = settings.mInitialAlpha;
+
+    this->NTOPICS = settings.mNTopics;
+
+    this->ESTIMATE_ALPHA = (this->mAlpha == "fixed") ? 0 : 1;
+
+    this->LAG = settings.LAG;
+}
 
 double TopicModel::doc_e_step(document* doc, double* gamma, double** phi,
     lda_model* model, lda_suffstats* ss)
@@ -182,11 +191,13 @@ double TopicModel::compute_likelihood(document* doc, lda_model* model, double** 
 
 //public methods
 
-void TopicModel::run_em(corpus* corpus)
+void TopicModel::run_em(corpus* corpus, const TopicModelEstimate& settings)
 {
     make_directory((char*)this->mOutputPath.c_str());
     char* start = (char*)this->mTopicInit.c_str();
     char* directory = (char*)this->mOutputPath.c_str();
+
+    this->SetTopicModelEstimateSettings(settings);
 
     int d, n;
     lda_model* model = NULL;
@@ -308,40 +319,40 @@ void TopicModel::run_em(corpus* corpus)
 
 //constructor
 
-TopicModel::TopicModel(const TopicModelSettings& settings)
-    : LAG(5)
+TopicModelSettings::TopicModelSettings(int varMaxIter,
+    float varConvergence,
+    int emMaxIter,
+    float emConvergence,
+    std::string alpha,
+    std::string dataPath)
+    : mVarMaxIter(varMaxIter)
+    , mVarConvergence(varConvergence)
+    , mEmMaxIter(emMaxIter)
+    , mEmConvergence(emConvergence)
+    , mAlpha(alpha)
+    , mDataPath(dataPath)
 {
+}
 
-    this->mDataPath = settings.mDataPath;
-
-    this->mTopicInit = settings.mTopicInit;
-
-    this->mOutputPath = settings.mOutputPath;
-
-    this->mAlpha = settings.mAlpha;
-
-    this->VAR_MAX_ITER = settings.mVarMaxIter;
-
-    this->VAR_CONVERGED = settings.mVarConvergence;
-
-    this->EM_CONVERGED = settings.mEmConvergence;
-
-    this->EM_MAX_ITER = settings.mEmMaxIter;
-
-    this->INITIAL_ALPHA = settings.mInitialAlpha;
-
-    this->NTOPICS = settings.mNTopics;
-
-    this->ESTIMATE_ALPHA = (this->mAlpha == "fixed") ? 0 : 1;
+TopicModelEstimate::TopicModelEstimate(float initialAlpha, int topics, int varMaxIter,
+    float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
+    std::string dataPath, std::string topicInit, std::string outputPath)
+    : TopicModelSettings(varMaxIter, varConvergence, emMaxIter, emConvergence, alpha, dataPath)
+    , mInitialAlpha(initialAlpha)
+    , mNTopics(topics)
+    , mTopicInit(topicInit)
+    , mOutputPath(outputPath)
+    , LAG(5)
+{
 }
 
 int main()
 {
-    TopicModelSettings settings(0.5, 30, 20, 1e-6, 100, 1e-4, "estimate",
+    TopicModelEstimate settings(0.5, 30, 20, 1e-6, 100, 1e-4, "estimate",
         "example/ap/ap.dat", "random", "output");
-    TopicModel topicModel(settings);
+    TopicModel topicModel;
 
     corpus* newsCorpus = read_data((char*)settings.mDataPath.c_str());
 
-    topicModel.run_em(newsCorpus);
+    topicModel.run_em(newsCorpus, settings);
 }

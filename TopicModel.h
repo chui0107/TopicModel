@@ -21,18 +21,7 @@
 
 struct TopicModelSettings {
 
-    /*
-	 
-	 command line parameters
-	 lda est 1 30 ./settings.txt ./ap/ap.dat random ./output
-	 
-	*/
-
-    float mInitialAlpha;
-    int mNTopics;
     std::string mDataPath;
-    std::string mTopicInit;
-    std::string mOutputPath;
 
     /*
 	 
@@ -52,7 +41,32 @@ struct TopicModelSettings {
     float mEmConvergence;
     std::string mAlpha;
 
-    TopicModelSettings(float initialAlpha, int topics, int varMaxIter,
+    TopicModelSettings(int varMaxIter,
+        float varConvergence,
+        int emMaxIter,
+        float emConvergence,
+        std::string alpha,
+        std::string dataPath);
+};
+
+struct TopicModelEstimate : TopicModelSettings {
+
+    /*
+	 
+	 command line parameters
+	 lda est 1 30 ./settings.txt ./ap/ap.dat random ./output
+	 
+	 */
+
+    float mInitialAlpha;
+    int mNTopics;
+
+    std::string mTopicInit;
+    std::string mOutputPath;
+
+    const int LAG;
+
+    TopicModelEstimate(float initialAlpha, int topics, int varMaxIter,
         float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
         std::string dataPath, std::string topicInit, std::string outputPath);
 };
@@ -60,8 +74,6 @@ struct TopicModelSettings {
 class TopicModel {
 
 private:
-    const int LAG;
-
     /*
 	 example:
 	 
@@ -92,6 +104,10 @@ private:
     std::string mDataPath;
     std::string mOutputPath;
 
+    int LAG;
+
+    void SetTopicModelEstimateSettings(const TopicModelEstimate& settings);
+
     void write_word_assignment(FILE* f,
         document* doc,
         double** phi,
@@ -118,9 +134,7 @@ private:
         double*);
 
 public:
-    TopicModel(const TopicModelSettings& settings);
-
-    void run_em(corpus* corpus);
+    void run_em(corpus* corpus, const TopicModelEstimate& settings);
 };
 
 #endif
