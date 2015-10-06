@@ -29,6 +29,22 @@ void TopicModel::SetTopicModelEstimateSettings(const TopicModelEstimate& setting
     this->LAG = settings.LAG;
 }
 
+void TopicModel::SetTopicModelInferenceSettings(const TopicModelInference& settings)
+{
+
+    this->mAlpha = settings.mAlpha;
+
+    this->VAR_MAX_ITER = settings.mVarMaxIter;
+
+    this->VAR_CONVERGED = settings.mVarConvergence;
+
+    this->EM_CONVERGED = settings.mEmConvergence;
+
+    this->EM_MAX_ITER = settings.mEmMaxIter;
+
+    this->ESTIMATE_ALPHA = (this->mAlpha == "fixed") ? 0 : 1;
+}
+
 double TopicModel::doc_e_step(document* doc, double* gamma, double** phi,
     lda_model* model, lda_suffstats* ss)
 {
@@ -317,6 +333,43 @@ void TopicModel::run_em(corpus* corpus, const TopicModelEstimate& settings)
     fclose(likelihood_file);
 }
 
+void TopicModel::infer(corpus* corpus, const TopicModelInference& settings)
+{
+    this->SetTopicModelInferenceSettings(settings);
+
+    char* model_root = (char*)settings.mModelPath.c_str();
+    char* save = (char*)settings.mOutputPath.c_str();
+
+    FILE* fileptr;
+    char filename[100];
+    int i, d, n;
+    lda_model* model;
+    double **var_gamma, likelihood, **phi;
+    document* doc;
+
+    model = load_lda_model(model_root);
+    var_gamma = (double**)malloc(sizeof(double*) * (corpus->num_docs));
+    for (i = 0; i < corpus->num_docs; i++)
+        var_gamma[i] = (double*)malloc(sizeof(double) * model->num_topics);
+    sprintf(filename, "%s-lda-lhood.dat", save);
+    fileptr = fopen(filename, "w");
+    for (d = 0; d < corpus->num_docs; d++) {
+        if (((d % 100) == 0) && (d > 0))
+            printf("document %d\n", d);
+
+        doc = &(corpus->docs[d]);
+        phi = (double**)malloc(sizeof(double*) * doc->length);
+        for (n = 0; n < doc->length; n++)
+            phi[n] = (double*)malloc(sizeof(double) * model->num_topics);
+        likelihood = lda_inference(doc, model, var_gamma[d], phi);
+
+        fprintf(fileptr, "%5.5f\n", likelihood);
+    }
+    fclose(fileptr);
+    sprintf(filename, "%s-gamma.dat", save);
+    save_gamma(filename, var_gamma, corpus->num_docs, model->num_topics);
+}
+
 //constructor
 
 TopicModelSettings::TopicModelSettings(int varMaxIter,
@@ -346,13 +399,28 @@ TopicModelEstimate::TopicModelEstimate(float initialAlpha, int topics, int varMa
 {
 }
 
+TopicModelInference::TopicModelInference(int varMaxIter,
+    float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
+    std::string dataPath, std::string modelPath, std::string outputPath)
+    : TopicModelSettings(varMaxIter, varConvergence, emMaxIter, emConvergence, alpha, dataPath)
+    , mModelPath(modelPath)
+    , mOutputPath(outputPath)
+{
+}
+
 int main()
 {
-    TopicModelEstimate settings(0.5, 30, 20, 1e-6, 100, 1e-4, "estimate",
+    TopicModelEstimate estimateSettings(0.5, 30, 20, 1e-6, 100, 1e-4, "estimate",
         "example/ap/ap.dat", "random", "output");
+
     TopicModel topicModel;
 
-    corpus* newsCorpus = read_data((char*)settings.mDataPath.c_str());
+    corpus* newsCorpus = read_data((char*)estimateSettings.mDataPath.c_str());
 
-    topicModel.run_em(newsCorpus, settings);
+    TopicModelInference inferenceSettings(-1, 1e-6, 100, 1e-4, "estimate", "example/ap/ap.dat",
+        "output/final", "inferred");
+
+    //topicModel.run_em(newsCorpus, estimateSettings);
+
+    topicModel.infer(newsCorpus, inferenceSettings);
 }

@@ -71,6 +71,14 @@ struct TopicModelEstimate : TopicModelSettings {
         std::string dataPath, std::string topicInit, std::string outputPath);
 };
 
+struct TopicModelInference : TopicModelSettings {
+    std::string mModelPath;
+    std::string mOutputPath;
+    TopicModelInference(int varMaxIter,
+        float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
+        std::string dataPath, std::string modelPath, std::string outputPath);
+};
+
 class TopicModel {
 
 private:
@@ -108,6 +116,8 @@ private:
 
     void SetTopicModelEstimateSettings(const TopicModelEstimate& settings);
 
+    void SetTopicModelInferenceSettings(const TopicModelInference& settings);
+
     void write_word_assignment(FILE* f,
         document* doc,
         double** phi,
@@ -135,6 +145,8 @@ private:
 
 public:
     void run_em(corpus* corpus, const TopicModelEstimate& settings);
+
+    void infer(corpus* corpus, const TopicModelInference& settings);
 };
 
 #endif
