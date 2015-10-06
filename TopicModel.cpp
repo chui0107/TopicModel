@@ -410,15 +410,30 @@ TopicModelInference::TopicModelInference(int varMaxIter,
 
 int main()
 {
-    TopicModelEstimate estimateSettings(0.5, 30, 20, 1e-6, 100, 1e-4, "estimate",
-        "example/ap/ap.dat", "random", "output");
+    float initialAlpha = 0.5;
+    int topics = 30;
+    int varMaxIter = 20;
+    float varConvergence = 1e-6;
+    int emMaxIter = 100;
+    float emConvergence = 1e-4;
+    std::string alpha = "estimate";
+    std::string dataPath = "example/ap/ap.dat";
+    std::string topicInit = "random";
+    std::string outputPath = "output";
+
+    TopicModelEstimate estimateSettings(initialAlpha, topics, varMaxIter, varConvergence,
+        emMaxIter, emConvergence, alpha, dataPath, topicInit, outputPath);
 
     TopicModel topicModel;
 
     corpus* newsCorpus = read_data((char*)estimateSettings.mDataPath.c_str());
 
-    TopicModelInference inferenceSettings(-1, 1e-6, 100, 1e-4, "estimate", "example/ap/ap.dat",
-        "output/final", "inferred");
+    varMaxIter = -1;
+    outputPath = "inferred";
+    std::string modelPath = "output/final";
+
+    TopicModelInference inferenceSettings(varMaxIter, varConvergence, emMaxIter,
+        emConvergence, alpha, dataPath, modelPath, outputPath);
 
     //topicModel.run_em(newsCorpus, estimateSettings);
 
