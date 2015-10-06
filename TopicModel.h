@@ -18,6 +18,8 @@
 #include <assert.h>
 #include "utils.h"
 #include <iostream>
+#include <vector>
+#include <string>
 
 struct TopicModelSettings {
 
@@ -77,6 +79,13 @@ struct TopicModelInference : TopicModelSettings {
     TopicModelInference(int varMaxIter,
         float varConvergence, int emMaxIter, float emConvergence, std::string alpha,
         std::string dataPath, std::string modelPath, std::string outputPath);
+};
+
+struct TopicModelTopTerms {
+
+    std::string mDataPath;
+    std::string mModelPath;
+    TopicModelTopTerms(std::string modelPath, std::string dataPath);
 };
 
 class TopicModel {
@@ -143,10 +152,14 @@ private:
         double**,
         double*);
 
+    std::vector<std::string> GetTopN(const std::string& topic, std::vector<std::string>* vocabDict, int n);
+
 public:
     void run_em(corpus* corpus, const TopicModelEstimate& settings);
 
     void infer(corpus* corpus, const TopicModelInference& settings);
+
+    std::vector<std::vector<std::string> > GetTopNTerms(TopicModelTopTerms& settings, int n);
 };
 
 #endif

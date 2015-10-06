@@ -1,4 +1,6 @@
 #include "TopicModel.h"
+#include <fstream>
+#include <queue>
 
 //private methods
 
@@ -205,6 +207,38 @@ double TopicModel::compute_likelihood(document* doc, lda_model* model, double** 
     return (likelihood);
 }
 
+std::vector<std::string> TopicModel::GetTopN(const std::string& topic, std::vector<std::string>* vocabDict, int n)
+{
+    using namespace std;
+    vector<string> topN;
+    priority_queue<pair<float, int> > q;
+    //split on space, NOTE the first character is a while space according to the original code's final.beta
+    int l = 0, r = 1, p = 0;
+    //tokenize the words and extract them by their probability
+    while (r < topic.size()) {
+        while (r < topic.size() && topic[r] != ' ') {
+            r++;
+        }
+
+        string probaString = topic.substr(l, r - l);
+        float proba = stof(probaString);
+        pair<float, int> pair = make_pair<float, int>(proba, p++);
+
+        q.push(pair);
+
+        r++;
+        l = r;
+    }
+
+    for (int i = 0; i < n && q.empty() == false; i++) {
+        int index = q.top().second;
+        topN.push_back((*vocabDict)[index]);
+        q.pop();
+    }
+
+    return topN;
+}
+
 //public methods
 
 void TopicModel::run_em(corpus* corpus, const TopicModelEstimate& settings)
@@ -370,6 +404,38 @@ void TopicModel::infer(corpus* corpus, const TopicModelInference& settings)
     save_gamma(filename, var_gamma, corpus->num_docs, model->num_topics);
 }
 
+std::vector<std::vector<std::string> > TopicModel::GetTopNTerms(TopicModelTopTerms& settings, int n)
+{
+    using namespace std;
+
+    string line;
+    ifstream vocabFile(settings.mDataPath);
+    ifstream betaFile(settings.mModelPath);
+    vector<vector<string> > ret;
+
+    if (vocabFile.is_open() == false || betaFile.is_open() == false) {
+        vocabFile.close();
+        betaFile.close();
+        return ret;
+    }
+
+    vector<string>* vocabDict = new vector<string>();
+    while (getline(vocabFile, line)) {
+        vocabDict->push_back(line);
+    }
+
+    //get the top n term for each topic
+    while (getline(betaFile, line)) {
+        vector<string> topN = GetTopN(line, vocabDict, n);
+        ret.push_back(topN);
+    }
+
+    vocabFile.close();
+    betaFile.close();
+    delete vocabDict;
+    return ret;
+}
+
 //constructor
 
 TopicModelSettings::TopicModelSettings(int varMaxIter,
@@ -408,8 +474,15 @@ TopicModelInference::TopicModelInference(int varMaxIter,
 {
 }
 
+TopicModelTopTerms::TopicModelTopTerms(std::string modelPath, std::string dataPath)
+    : mModelPath(modelPath)
+    , mDataPath(dataPath)
+{
+}
+
 int main()
 {
+
     float initialAlpha = 0.5;
     int topics = 30;
     int varMaxIter = 20;
@@ -435,7 +508,21 @@ int main()
     TopicModelInference inferenceSettings(varMaxIter, varConvergence, emMaxIter,
         emConvergence, alpha, dataPath, modelPath, outputPath);
 
+    //topic estimate
     //topicModel.run_em(newsCorpus, estimateSettings);
 
-    topicModel.infer(newsCorpus, inferenceSettings);
+    //topic inference
+    //topicModel.infer(newsCorpus, inferenceSettings);
+
+    //top n terms for each topic
+    TopicModelTopTerms topicModelTopTermSettings("output/final.beta", "example/ap/vocab.txt");
+    int n = 10;
+    std::vector<std::vector<std::string> > ret = topicModel.GetTopNTerms(topicModelTopTermSettings, n);
+    for (int i = 0; i < ret.size(); i++) {
+        std::cout << "topic " << i << ": ";
+        for (int j = 0; j < ret[i].size(); j++) {
+            std::cout << ret[i][j] << " ";
+        }
+        std::cout << std::endl;
+    }
 }
